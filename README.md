@@ -56,10 +56,10 @@ Integration and unit tests are provided.
 
 **v3.0.17.ipy - 2014 Nov 24**
 
-    + Added support for IronPython based on tips form https://github.com/shotgunsoftware/python-api/wiki/API-Usage-Tips#ironpython (NO_SSL_VALIDATION = True, authority.encode('utf-8'))
-    + IronPython connects to Shotgun server via TLS1 now (as SSLv3 is disabled due to POODLE vulnerability)
-    + Limited changes to only IronPython code paths so the original Python implementation is not affected
-    
+   + Added support for IronPython based on API tips  (https://github.com/shotgunsoftware/python-api/wiki/API-Usage-Tips#ironpython)
+   + IronPython connects to Shotgun server via TLS1 now (as SSLv3 is disabled due to POODLE vulnerability)
+   + Limited changes to only IronPython code paths so the original Python implementation is not affected
+
 **v3.0.17 - 2014 Jul 10**
 
    + Add ability to update last_accessed_by_current_user on Project.
