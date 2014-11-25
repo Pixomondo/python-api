@@ -71,14 +71,14 @@ SG_TIMEZONE = SgTimezone()
 
 try:
     import ssl
-    NO_SSL_VALIDATION = False if not sys.platform == "cli" else True
+    NO_SSL_VALIDATION = True if sys.platform == "cli" else False
 except ImportError:
     LOG.debug("ssl not found, disabling certificate validation")
     NO_SSL_VALIDATION = True
 
 # ----------------------------------------------------------------------------
 # Version
-__version__ = "3.0.18.dev"
+__version__ = "3.0.17.ipy"
 
 # ----------------------------------------------------------------------------
 # Errors
@@ -2026,8 +2026,12 @@ class FormPostHandler(urllib2.AbstractHTTPHandler):
             self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)    
 
     def https_open(self, req):
-        return self.do_open(FormPostHandler.TLS1Connection, req)
-    
+        # IronPython doesn't correctly fall back to using TLS1 which the SG Server uses so we are hard coding it here
+        if sys.platform == "cli":
+            return self.do_open(FormPostHandler.TLS1Connection, req)
+        else:
+            return self.do_open(httplib.HTTPSConnection, req)
+
     def http_request(self, request):
         data = request.get_data()
         if data is not None and not isinstance(data, basestring):
