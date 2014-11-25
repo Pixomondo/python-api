@@ -8,6 +8,7 @@ The latest version can always be found at http://github.com/shotgunsoftware/pyth
 
 * Shotgun server v2.4.12 or higher. (Earlier builds of 2.4 will work, but have buggy support for float field types)
 * Python v2.4 - v2.7.
+* IronPython 2.7 (2.6 requires exteral zlib libraries)
 
 ## High Performance Requirements
 
@@ -53,6 +54,12 @@ Integration and unit tests are provided.
 
 ## Changelog
 
+**v3.0.17.ipy - 2014 Nov 24**
+
+    + Added support for IronPython based on tips form https://github.com/shotgunsoftware/python-api/wiki/API-Usage-Tips#ironpython (NO_SSL_VALIDATION = True, authority.encode('utf-8'))
+    + IronPython connects to Shotgun server via TLS1 now (as SSLv3 is disabled due to POODLE vulnerability)
+    + Limited changes to only IronPython code paths so the original Python implementation is not affected
+    
 **v3.0.17 - 2014 Jul 10**
 
    + Add ability to update last_accessed_by_current_user on Project.
