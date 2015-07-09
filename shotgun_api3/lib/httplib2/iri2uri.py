@@ -12,6 +12,7 @@ __license__ = "MIT"
 __history__ = """
 """
 
+import sys
 import urlparse
 
 
@@ -68,7 +69,10 @@ def iri2uri(uri):
     the IRI before passing it into the function.""" 
     if isinstance(uri ,unicode):
         (scheme, authority, path, query, fragment) = urlparse.urlsplit(uri)
-        authority = authority.encode('idna')
+        # IronPython before 2.7.5b3 doesn't support idna encoding so we are using utf-8 instead
+        # see also: https://ironpython.codeplex.com/workitem/34651
+        encoding_scheme = 'utf-8' if (sys.platform == "cli" and sys.version_info < (2, 7, 5)) else 'idna'
+        authority = authority.encode(encoding_scheme)
         # For each character in 'ucschar' or 'iprivate'
         #  1. encode as utf-8
         #  2. then %-encode each octet of that utf-8 
