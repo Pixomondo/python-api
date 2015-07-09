@@ -8,7 +8,6 @@ The latest version can always be found at http://github.com/shotgunsoftware/pyth
 
 * Shotgun server v2.4.12 or higher. (Earlier builds of 2.4 will work, but have buggy support for float field types)
 * Python v2.4 - v2.7.
-* IronPython 2.7 (2.6 requires exteral zlib libraries)
 
 ## High Performance Requirements
 
@@ -53,12 +52,6 @@ Integration and unit tests are provided.
 - To run all of the tests, use the shell script run-tests. This script require nose to be installed.
 
 ## Changelog
-
-**v3.0.17.ipy - 2014 Nov 24**
-
-   + Added support for IronPython based on API tips  (https://github.com/shotgunsoftware/python-api/wiki/API-Usage-Tips#ironpython)
-   + IronPython connects to Shotgun server via TLS1 now (as SSLv3 is disabled due to POODLE vulnerability)
-   + Limited changes to only IronPython code paths so the original Python implementation is not affected
 
 **v3.0.17 - 2014 Jul 10**
 
