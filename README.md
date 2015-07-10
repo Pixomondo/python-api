@@ -54,7 +54,7 @@ Integration and unit tests are provided.
 
 ## Changelog
 
-**v3.0.20.ipy - 2014 Nov 24**
+**v3.0.20.ipy - 2015 Sep 7**
 
    + Added support for IronPython based on API tips  (https://github.com/shotgunsoftware/python-api/wiki/API-Usage-Tips#ironpython)
    + IronPython connects to Shotgun server via TLS1 now (as SSLv3 is disabled due to POODLE vulnerability)
