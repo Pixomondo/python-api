@@ -127,7 +127,7 @@ class TestShotgunApi(base.LiveTestBase):
     def test_get_session_token(self):
         """Got session UUID"""
         #TODO test results
-        rv = self.sg._get_session_token()
+        rv = self.sg.get_session_token()
         self.assertTrue(rv)
 
     def test_upload_download(self):
@@ -165,7 +165,7 @@ class TestShotgunApi(base.LiveTestBase):
         file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "sg_logo_download.jpg")
         result = self.sg.download_attachment(attach_id, file_path=file_path)
         self.assertEqual(result, file_path)
-    	# On windows read may not read to end of file unless opened 'rb'
+        # On windows read may not read to end of file unless opened 'rb'
         fp = open(file_path, 'rb')
         attach_file = fp.read()
         fp.close()
@@ -1408,6 +1408,7 @@ class TestErrors(base.TestBase):
         api_key = self.config.api_key
         login = self.config.human_login
         password = self.config.human_password
+        auth_token = "111111"
 
         # Test various combinations of illegal arguments
         self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url)
@@ -1417,18 +1418,24 @@ class TestErrors(base.TestBase):
         self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, login=login)
         self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, password=password)
         self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, script_name, login=login, password=password)
+        self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, login=login, auth_token=auth_token)
+        self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, password=password, auth_token=auth_token)
+        self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, script_name, login=login,
+                          password=password, auth_token=auth_token)
+        self.assertRaises(ValueError, shotgun_api3.Shotgun, server_url, api_key=api_key, login=login,
+                          password=password, auth_token=auth_token)
 
         # Test failed authentications
         sg = shotgun_api3.Shotgun(server_url, script_name, api_key)
-        self.assertRaises(shotgun_api3.Fault, sg.find_one, 'Shot',[])
+        self.assertRaises(shotgun_api3.AuthenticationFault, sg.find_one, 'Shot',[])
 
         script_name = self.config.script_name
         api_key = 'notrealapikey'
         sg = shotgun_api3.Shotgun(server_url, script_name, api_key)
-        self.assertRaises(shotgun_api3.Fault, sg.find_one, 'Shot',[])
+        self.assertRaises(shotgun_api3.AuthenticationFault, sg.find_one, 'Shot',[])
 
         sg = shotgun_api3.Shotgun(server_url, login=login, password='not a real password')
-        self.assertRaises(shotgun_api3.Fault, sg.find_one, 'Shot',[])
+        self.assertRaises(shotgun_api3.AuthenticationFault, sg.find_one, 'Shot',[])
 
     @patch('shotgun_api3.shotgun.Http.request')
     def test_status_not_200(self, mock_request):
@@ -1507,6 +1514,10 @@ class TestHumanUserSudoAuth(base.TestBase):
 
 
 class TestHumanUserAuth(base.HumanUserAuthLiveTestBase):
+    """
+    Testing the username/password authentication method
+    """
+    
     def test_humanuser_find(self):
         """Called find, find_one for known entities as human user"""
         filters = []
@@ -1557,6 +1568,69 @@ class TestHumanUserAuth(base.HumanUserAuthLiveTestBase):
             self.version['id'], {'image':None})
         expected_clear_thumbnail = {'id': self.version['id'], 'image': None, 'type': 'Version'}
         self.assertEqual(expected_clear_thumbnail, response_clear_thumbnail)
+
+
+class TestSessionTokenAuth(base.SessionTokenAuthLiveTestBase):
+    """
+    Testing the session token based authentication method
+    """
+
+    def test_humanuser_find(self):
+        """Called find, find_one for known entities as session token based user"""
+
+        if self.sg.server_caps.version >= (5, 4, 1):
+
+            filters = []
+            filters.append(['project', 'is', self.project])
+            filters.append(['id', 'is', self.version['id']])
+
+            fields = ['id']
+
+            versions = self.sg.find("Version", filters, fields=fields)
+
+            self.assertTrue(isinstance(versions, list))
+            version = versions[0]
+            self.assertEqual("Version", version["type"])
+            self.assertEqual(self.version['id'], version["id"])
+
+            version = self.sg.find_one("Version", filters, fields=fields)
+            self.assertEqual("Version", version["type"])
+            self.assertEqual(self.version['id'], version["id"])
+
+    def test_humanuser_upload_thumbnail_for_version(self):
+        """simple upload thumbnail for version test as session based token user."""
+
+        if self.sg.server_caps.version >= (5, 4, 1):
+
+            this_dir, _ = os.path.split(__file__)
+            path = os.path.abspath(os.path.expanduser(
+                os.path.join(this_dir,"sg_logo.jpg")))
+            size = os.stat(path).st_size
+
+            # upload thumbnail
+            thumb_id = self.sg.upload_thumbnail("Version",
+                self.version['id'], path)
+            self.assertTrue(isinstance(thumb_id, int))
+
+            # check result on version
+            version_with_thumbnail = self.sg.find_one('Version',
+                [['id', 'is', self.version['id']]],
+                fields=['image'])
+
+            self.assertEqual(version_with_thumbnail.get('type'), 'Version')
+            self.assertEqual(version_with_thumbnail.get('id'), self.version['id'])
+
+
+            h = Http(".cache")
+            thumb_resp, content = h.request(version_with_thumbnail.get('image'), "GET")
+            self.assertEqual(thumb_resp['status'], '200')
+            self.assertEqual(thumb_resp['content-type'], 'image/jpeg')
+
+            # clear thumbnail
+            response_clear_thumbnail = self.sg.update("Version",
+                self.version['id'], {'image':None})
+            expected_clear_thumbnail = {'id': self.version['id'], 'image': None, 'type': 'Version'}
+            self.assertEqual(expected_clear_thumbnail, response_clear_thumbnail)
 
 
 class TestProjectLastAccessedByCurrentUser(base.LiveTestBase):
